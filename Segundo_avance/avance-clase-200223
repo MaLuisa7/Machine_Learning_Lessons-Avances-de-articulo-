@@ -1,0 +1,265 @@
+\documentclass{article}
+
+% Language setting
+% Replace `english' with e.g. `spanish' to change the document language
+\usepackage[spanish]{babel}
+
+% Set page size and margins
+% Replace `letterpaper' with `a4paper' for UK/EU standard size
+\usepackage[letterpaper,top=2cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
+
+% Useful packages
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{natbib}
+\bibliographystyle{unsrtnat}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+
+\title{Algoritmos del comercio de acciones: Pronósticos aplicando técnicas de ML}
+\author{Ma. Luisa Argáez Salcido}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+El objetivo de este ejercicio es pronosticar series temporales financieras utilizando y comparando diferentes algoritmos de aprendizaje automático supervisados de clasificaón para predecir la dirección del mercado de las series temporales financieras, en este documento se  intentará pronosticar la dirección diaria de la acción llamada S$\&$P500 
+\end{abstract}
+
+\section{Introduction}
+
+El comercio de acciones o también llamado en inglés "Trading" es  la compra y venta de valores, como acciones, bonos, divisas y materias primas. El éxito comercial depende de la capacidad del comerciante para ser rentable con el tiempo.\cite{halls-moore}
+
+Ahora bien, el trading algoritmico es el uso de un sistema automatizado para la realización de operaciones, que se ejecutan de forma predeterminada a través de un algoritmo específicamente sin intervención humana.\cite{halls-moore}
+
+Bien se conoce que el aprendizaje automático es un subcampo de la inteligencia artificial que permite a las computadoras realizar tareas sin ser explicitamente programadas, si no que a través de un entrenamiento sean capaces de realizar cálculos por ellas mismas.
+
+En el trading, se utiliza el "backtesting", la cual es una forma de estudiar el rendimiento de una estrategia potencial en la que se aplica a muestras de datos históricos de la vida real. 
+
+El trading algortimico presenta ventajas y desventajas. Entre las ventajas es posible mencionar: 
+
+\textbf{Ventajas}
+\begin{itemize}
+\item Valoración Histórica.
+El backtesting, que es el proceso de creación de una estrategia automatizada, es que su rendimiento se puede determinar en los datos históricos del mercado, que (con suerte) son representativos de los datos del mercado futuro. El backtesting permite determinar las propiedades estadísticas (anteriores) de la estrategia, lo que proporciona información sobre si es probable que una estrategia sea rentable en el futuro.
+
+\item Eficiencia.
+El comercio algorítmico es sustancialmente más eficiente que un enfoque discrecional. Con un sistema completamente automatizado, no hay necesidad de que un individuo o equipo esté constantemente monitoreando los mercados para la acción del precio o la entrada de noticias.
+ 
+\item Comparación.
+Las estrategias sistemáticas brindan información estadística sobre el desempeño histórico y actual.
+
+\item Frecuencias más altas.
+Las estrategias que operan a frecuencias más altas en muchos mercados se vuelven posibles en un entorno automatizado. De hecho, algunas de las estrategias comerciales más rentables operan en el dominio de frecuencia ultra alta en los datos del libro de órdenes limitadas.
+
+\end{itemize}
+ 
+
+\textbf{Desventajas}
+\begin{itemize}
+
+\item Requerimientos de Capital. El comercio algorítmico generalmente requiere una base de capital mucho más grande que la que se utilizaría para el comercio minorista discrecional, esto se debe simplemente al hecho de que hay pocos corredores que admiten la ejecución automatizada de operaciones que no requieren grandes cuentas mínimas.
+
+Los feeds intradía minoristas comunes a menudo tienen un precio de entre $300 y $500 por mes, mientras que los feeds comerciales tienen un orden de magnitud superior.
+
+\item Buenas equipo de computo.
+
+\item Programación/Experiencia científica.
+Es un requisito para el comerciante algorítmico ser relativamente competente tanto en programación como en modelado científico.\cite{halls-moore}
+
+\end{itemize}
+
+%%%%%
+El comercio algorítmico se distingue de otros tipos de clases de inversión porque es posible proporcionar expectativas sobre el rendimiento futuro de forma más fiable a partir del rendimiento pasado, como consecuencia de la abundante disponibilidad de datos, a esto se le conoce como backtesting. 
+
+\textbf{Razones clave para el backtesting}
+\begin{itemize}
+\item Filtración.
+Se eliminan estrategias que no satisfagan nuestras necesidades de desempeño
+\item Modelado. 
+El backtesting nos permite de una manera segura, probar nuevos modelos de ciertos fenómenos del mercado, como los costos de transacción,
+\item Optimización
+El backtesting permite aumentar el rendimiento de una estrategia modificando la cantidad o valores de los parámetros asociados a esa estrategia y recalculando su rendimiento
+\item Verificación
+Las estrategias a menudo se obtienen de forma externa, a través de nuestro pipeline de estrategias
+\end{itemize}
+
+
+\textbf{Desventajas del backtesting}
+\begin{itemize}
+\item Sesgo de optimización
+Implica ajustar o introducir parámetros comerciales adicionales hasta que el rendimiento de la estrategia en el conjunto de datos de backtest sea muy atractivo. Sin embargo, una vez en vivo, el rendimiento de la estrategia puede ser notablemente diferente. Otro nombre para este sesgo es "ajuste de curvas".
+\item Sesgo de anticipación
+Se introduce en un sistema de backtesting cuando se incluyen accidentalmente datos futuros en un punto de la simulación en el que esos datos no habrían estado realmente disponibles. Algunos ejemplos son.
+\begin{itemize}
+\item Errores técnicos
+\item Cálculo de parámetros
+\item Máximos/mínimos
+\item Sesgo de sobreviviente
+\end{itemize}
+
+\item El sesgo de supervivencia.
+Es un fenómeno particularmente peligroso y puede conducir a un rendimiento significativamente "inflado" para ciertos tipos de estrategias. Ocurre cuando las estrategias se prueban en conjuntos de datos que no incluyen el universo completo de activos anteriores que pueden haber sido elegidos en un momento determinado, sino que solo consideran aquellos que han "sobrevivido" hasta el momento actual.
+\item Sesgo cognitivo
+\item Problemas de cambio
+\begin{itemize}
+    \item  Consolidación de precios.
+Datos diarios en forma de cifras Apertura-Alto-Bajo-Cierre o en inglés "Open- High- Low -Close" (OHLC), especialmente para acciones. Si la estrategia comercial hace un uso extensivo de cualquiera de los datos "OHLC" específicamente, el rendimiento de la prueba retrospectiva puede diferir del rendimiento en vivo, ya que las órdenes pueden enrutarse a diferentes intercambios según su corredor y su acceso disponible a la liquidez. La única forma de resolver estos problemas es hacer uso de datos de mayor frecuencia u obtener datos directamente de un intercambio individual, en lugar de una fuente compuesta más barata.
+\item Comercio de divisas y ECN
+\end{itemize}
+
+ \item Costos de Transacciones
+Uno de los errores más frecuentes de los principiantes al implementar modelos comerciales es descuidar (o subestimar enormemente) los efectos de los costos de transacción en una estrategia.
+
+\begin{itemize}
+    \item Comisión.
+    Todas las estrategias requieren alguna forma de acceso a un intercambio, ya sea directamente oa través de un intermediario de corretaje ("el corredor"). Estos servicios incurren en un costo incremental con cada operación, conocido como comisión.
+\item Deslizamiento (Slippage).
+El Slippage es la diferencia de precio que se logra entre el momento en que un sistema de negociación decide realizar una transacción y el momento en que se realiza realmente una transacción en una bolsa. El deslizamiento es un componente considerable de los costos de transacción y puede marcar la diferencia entre una estrategia muy rentable y una que funciona mal.
+\item Impacto en el mercado. El impacto en el mercado es el costo en el que incurren los comerciantes debido a la dinámica de oferta/demanda del intercambio (y el activo) a través del cual intentan operar. \cite{halls-moore}
+\end{itemize}
+\end{itemize}
+
+%%%%%%%%%%
+La ejecución automatizada es el proceso de permitir que la estrategia genere automáticamente señales de ejecución que se envían al corredor sin intervención humana. Esta es la forma más pura de estrategia comercial algorítmica, ya que minimiza los problemas debido a la intervención humana. 
+
+Es importante para una ejecución automátizada definir los siguientes conceptos:
+
+\begin{itemize}
+    \item Latencia.
+    Se define como el intervalo de tiempo entre una simulación y una respuesta
+     \item Elección del lenguaje de programación. 
+     Puede ser  $C++$, $C$ y Java o bien  MATLAB, R y Python
+    \item Tipo de colocación. 
+    Un comerciante minorista probablemente ejecutará su estrategia desde casa durante el horario de mercado, encenderá su PC, se conectará a la correduría, actualizará su software de mercado y luego permitirá que el algoritmo se ejecute automáticamente durante el día. Por el contrario, un fondo cuantitativo profesional con importantes activos bajo administración (AUM) tendrá una infraestructura de servidor ubicada en el intercambio dedicado para reducir la latencia en la medida de lo posible para ejecutar sus estrategias de alta velocidad.
+\end{itemize}
+%%
+
+La estrategia de abastecimiento.
+
+La identificación de estrategias tiene tanto que ver con las preferencias personales como con el rendimiento de la estrategia, cómo determinar el tipo y la cantidad de datos históricos para la prueba, cómo evaluar desapasionadamente una estrategia comercial y, finalmente, cómo proceder hacia la fase de backtesting y la implementación de la estrategia. Entre las ideas principales a evalucar para una estrategia de abastecimiento se encuentran:
+
+\begin{itemize}
+    \item  Identificar sus propias preferencias personales para operar
+\item Abastecimiento de ideas comerciales algorítmicas
+\item Evaluación de estrategias comerciales
+\begin{itemize}
+    \item  Metodología
+    \item Relación de Sharpe
+El ratio de Sharpe caracteriza heurísticamente el ratio riesgo/beneficio de la estrategia. Cuantifica cuánto retorno puede lograr para el nivel de volatilidad soportado por la curva de acciones. Naturalmente, necesitamos determinar el período y la frecuencia en que estos rendimientos y la volatilidad (es decir, la desviación estándar) se miden durante
+
+\item Apalancamiento
+Responde a la pregunta ¿La estrategia requiere un apalancamiento significativo para ser rentable?
+\item Frecuencia
+La frecuencia de la estrategia está íntimamente relacionada con la tecnología con la que cuenta (y, por lo tanto, la experiencia tecnológica), el índice de Sharpe y el nivel general de los costos de transacción.
+\item  Volatilidad
+La volatilidad está fuertemente relacionada con el "riesgo" de la estrategia. La relación de Sharpe caracteriza esto. Una mayor volatilidad de las clases de activos subyacentes, si no están cubiertas, a menudo conduce a una mayor volatilidad en la curva de acciones y, por lo tanto, índices de Sharpe más bajos
+\item Ganancia/pérdida, ganancia/pérdida promedio
+Las estrategias diferirán en sus características de ganancia/pérdida y ganancia/pérdida promedio. Uno puede tener una estrategia muy rentable, incluso si el número de operaciones perdedoras supera el número de operaciones ganadoras.
+Las estrategias de impulso tienden a tener este patrón, ya que se basan en una pequeña cantidad de "grandes éxitos" para ser rentables.
+Las estrategias de reversión a la media tienden a tener perfiles opuestos donde la mayoría de las operaciones son "ganadoras", pero las operaciones perdedoras pueden ser bastante graves.
+\item Reducción máxima
+La reducción máxima es la mayor caída porcentual general de pico a valle en la curva de capital de la estrategia. Es bien sabido que las estrategias de impulso sufren períodos de caídas prolongadas (debido a una serie de muchas operaciones perdedoras incrementales). Muchos comerciantes se darán por vencidos en períodos de reducción prolongada, incluso si las pruebas históricas han sugerido que esto es "negocios como de costumbre" para la estrategia. Deberá determinar qué porcentaje de reducción (y durante qué período de tiempo) puede aceptar antes de dejar de operar con su estrategia.
+
+\item Capacidad/Liquidez
+La capacidad determina la escalabilidad de la estrategia para aumentar el capital. Muchos de los fondos de cobertura más grandes sufren importantes problemas de capacidad a medida que sus estrategias aumentan la asignación de capital.
+\item  Parámetros
+ Debe probar y orientar estrategias con la menor cantidad de parámetros posible o asegurarse de tener suficientes cantidades de datos con los que probar sus estrategias.
+\item Punto de referencia
+Comparar su trabajo con otros
+\end{itemize}
+\end{itemize}
+
+La Obtención de Datos Históricos
+\begin{itemize}
+    \item Datos Fundamentales 
+Esto incluye datos sobre tendencias macroeconómicas, como tasas de interés, cifras de inflación, acciones corporativas (dividendos, división de acciones), presentaciones ante la SEC, cuentas corporativas, cifras de ganancias, informes de cosechas, datos meteorológicos, etc. Estos datos a menudo se usan para valorar empresas. u otros activos sobre una base fundamental
+\item Datos de noticias –
+\item Datos de precios de activos –
+\item Instrumentos Financieros
+\item Frecuencia
+Cuanto mayor sea la frecuencia de los datos, mayores serán los costos y los requisitos de almacenamiento
+\item Puntos de referencia –
+\item Tecnología
+\end{itemize}
+
+%%%7 Almacenamiento de datos financieros
+
+
+El almacenamiento de datos financieros puede ser complejo y llegar a requerir demasiado esfuerzo. A continuación se muestran conceptos claves al respecto.
+
+\begin{itemize}
+\item  Conjuntos de datos financieros
+Para el comerciante minorista algorítmico o el pequeño fondo cuantitativo, los conjuntos de datos más comunes son los precios históricos al final del día (EOD) e intradía para acciones, índices, futuros (principalmente materias primas o renta fija) y divisas (forex). Para simplificar esta discusión, nos concentraremos únicamente en los datos de fin de día (EOD) para acciones, ETF e índices de acciones.
+\item Es posible obtener datos financieros de:
+Yahoo Finanzas,Finanzas de Google,Cuantificauion.
+\item  Formatos de almacenamiento
+Hay tres formas principales de almacenar datos financieros. Todos ellos poseen diversos grados de acceso, rendimiento y capacidades estructurales. Entre ellos se encuentran: almacenamiento de archivos planos, almacenamiento de documentos/NoSQL y sistemas de gestión de bases de datos relacionales
+ 
+ \item Estructura de datos históricos
+La primera tarea es definir nuestras entidades, que son elementos de los datos financieros que eventualmente se mapearán en las tablas de la base de datos. Para una base de datos maestra de acciones, preveo las siguientes entidades:
+
+\item  Intercambios: ¿cuál es la última fuente original de los datos?
+\item Proveedor: ¿de dónde se obtiene un punto de datos en particular?
+\item Instrumento/ticker: el ticker/símbolo de la acción o el índice, junto con la información corporativa de la empresa o el fondo subyacente.
+\item Precio: el precio real de un valor en particular en un día en particular.
+\item Acciones corporativas: la lista de todas las divisiones de acciones o ajustes de dividendos (esto puede conducir a una o más tablas), necesaria para ajustar los datos de precios.
+\item Días festivos nacionales: para evitar clasificar erróneamente los días festivos comerciales como errores de datos faltantes, puede ser útil almacenar los días festivos nacionales y las referencias cruzadas.
+\end{itemize}
+ 
+ Evaluación de la precisión de los datos
+\begin{itemize}
+\item Los datos de precios históricos de los proveedores son propensos a muchas formas de error:
+\subitem Acciones Corporativas - Incorrecto manejo de splits de acciones y ajustes de dividendos. Uno debe estar absolutamente seguro de que las fórmulas se han implementado correctamente.
+\subitem Picos: puntos de precios que superan en gran medida ciertos niveles históricos de volatilidad. Uno debe tener cuidado aquí, ya que estos picos ocurren: vea May Flash Crash para ver un ejemplo aterrador. Los picos también pueden ser causados por no tener en cuenta las divisiones de acciones cuando ocurren. Los scripts de filtro de picos se utilizan para notificar a los comerciantes de tales situaciones.
+\item Agregación de OHLC: los datos gratuitos de OHLC, como los de Yahoo/Google, son particularmente propensos a situaciones de 'agregación de ticks incorrecta' en las que los intercambios más pequeños procesan transacciones pequeñas muy por encima de los precios de intercambio 'principales' del día, lo que conduce a máximos/sobreinflados. mínimos una vez agregados. Esto es menos un "error" como tal, pero más un problema del que hay que tener cuidado.
+\item Datos faltantes: los datos faltantes pueden deberse a la falta de transacciones en un período de tiempo particular (común en datos de resolución de segundo/minuto de empresas de pequeña capitalización sin liquidez), por feriados comerciales o simplemente un error en el sistema de intercambio. Los datos faltantes se pueden rellenar (es decir, rellenar con el valor anterior), interpolar (linealmente o de otro modo) o ignorar, según el sistema de comercio.
+\end{itemize}
+
+
+
+%%%8.  Processing Financial Data
+\begin{itemize}
+ \item Clasificación de Mercados e Instrumentos
+\subitem Mercados
+\subitem Instrumentos
+\subitem Datos Fundamentales
+\subitem Datos no estructurados:  Datos de texto completo y Datos de redes sociales
+ \item Frecuencia de datos
+  La frecuencia de los datos es una de las consideraciones más importantes al diseñar un sistema de comercio algorítmico. Impactará cada decisión de diseño con respecto al almacenamiento de datos, la prueba retrospectiva de una estrategia y la ejecución de un algoritmo. Es probable que las estrategias de mayor frecuencia conduzcan a un análisis estadísticamente más sólido, simplemente debido a la mayor cantidad de puntos de datos y de operaciones que se utilizarán. Las estrategias "High Frequency Trading" (HFT)  a menudo requieren una importante inversión de tiempo y capital para el desarrollo del software necesario para llevarlas a cabo. Las estrategias de menor frecuencia son más fáciles de desarrollar e implementar, ya que requieren menos automatización. Sin embargo, a menudo generarán muchas menos transacciones que una estrategia de mayor frecuencia, lo que lleva a un análisis estadísticamente menos sólido.
+\subitem Datos Semanales y Mensuales
+\subitem Datos diarios
+ Los datos "End Of Day" (EOD) no implican requisitos de almacenamiento particularmente grandes. Hay 252 días de negociación en un año para las bolsas estadounidenses y, por lo tanto, durante una década habrá 2.520 barras por valor. Incluso con un universo de 10 000 símbolos, son 25 200 000 barras, que se pueden manejar fácilmente dentro de un entorno de base de datos relacional.
+\subitem Barras Intradía
+Las estrategias intradía a menudo hacen uso de barras OHLCV por hora, quince, cinco, un minuto o segundo. Los proveedores de feeds intradía, como QuantQuote y DTN IQFeed, a menudo proporcionan barras por minuto o por segundo en función de sus datos de ticks. Los datos en tales frecuencias tendrán muchas barras "faltantes" simplemente porque no se realizaron transacciones en ese período de tiempo
+\subitem Datos del libro de órdenes y ticks
+Cuando se completa una operación en una bolsa u otro lugar, se genera un tick. Los feeds de ticks consisten en todas esas transacciones por intercambio. Los feeds de ticks minoristas se almacenan y cada dato tiene una marca de tiempo precisa al nivel de milisegundos. Los datos de ticks a menudo también incluyen el mejor precio de oferta/demanda actualizado
+\item Fuentes de datos
+Los datos del mercado financiero proporcionados con una frecuencia diaria diferida o más larga están disponibles libremente, aunque con una calidad general dudosa y el potencial de sesgo de supervivencia. Para obtener datos intradiarios suele ser necesario adquirir un feed de datos comercial. Los proveedores de tales alimentaciones varían enormemente en su capacidad de servicio al cliente, calidad general de alimentación y amplitud de instrumentos.
+\subitem Fuentes gratuitas
+Los datos de barra (bar data) gratuitos al final del día, que consisten en precios de instrumentos de Open-High-Low-Close-Volume (OHLCV), están disponibles para una amplia gama de acciones y futuros estadounidenses e internacionales de Yahoo Finance, Google Finance y Quandl. .
+\subitem Fuentes Comerciales
+Para llevar a cabo operaciones algorítmicas intradía, normalmente es necesario comprar un feed comercial. El precio puede oscilar entre  30 dolares por mes y alrededor de  500 dolares por mes para feeds de "nivel minorista".  
+
+\item  Obtención de datos. 
+Es posible obtener datos de: Yahoo Finanzas, Pandas, Quandl , DTN IQFeed.
+
+\item  Limpieza de datos financieros
+Con posterioridad a la entrega de datos financieros de los proveedores, es necesario realizar una limpieza de datos. Desafortunadamente, este puede ser un proceso laborioso, pero muy necesario. Hay varios problemas que requieren resolución: datos incorrectos, consideración de agregación de datos y reposición
+\item Calidad de los datos
+Quitar o reemplazar datos contradictorios e incorrectos
+\item Contratos de Futuros Continuos
+Consiste en un breve resumen de los contratos de futuros y Formación de un contrato de futuros continuo \cite{halls-moore}
+
+\end{itemize}
+%%%
+
+
+
+
+
+
+
+\bibliographystyle{alpha}
+\bibliography{sample}
+
+\end{document}
